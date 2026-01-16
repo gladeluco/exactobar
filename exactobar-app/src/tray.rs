@@ -1431,11 +1431,25 @@ impl SystemTray {
 
         // Position menu near the click (tray icon location)
         let (origin_x, origin_y) = if let Some((click_x, click_y)) = click_pos {
-            // Position menu below the click point, aligned to the right
-            // The click_x, click_y are screen coordinates from ksni
-            let x = (click_x as f32 - menu_width).max(10.0); // Left of click, but not off-screen
-            let y = (click_y as f32).max(0.0); // Below the panel
-            info!(click_x = click_x, click_y = click_y, menu_x = x, menu_y = y, "Positioning menu near tray icon");
+            // Get screen height to determine if tray is at top or bottom
+            let screen_height = cx.primary_display()
+                .map(|d| -> f32 { d.bounds().size.height.into() })
+                .unwrap_or(1080.0);
+            
+            // Position menu to the left of click point
+            let x = (click_x as f32 - menu_width).max(10.0);
+            
+            // If click is in bottom half of screen, position menu ABOVE the click
+            // Otherwise position it BELOW the click
+            let y = if (click_y as f32) > screen_height / 2.0 {
+                // Tray at bottom - menu goes above
+                ((click_y as f32) - menu_height - 10.0).max(10.0)
+            } else {
+                // Tray at top - menu goes below
+                (click_y as f32 + 30.0).min(screen_height - menu_height - 10.0)
+            };
+            
+            info!(click_x = click_x, click_y = click_y, screen_height = screen_height, menu_x = x, menu_y = y, "Positioning menu near tray icon");
             (x, y)
         } else if let Some(display) = cx.primary_display() {
             // Fallback: top-right of screen
