@@ -110,6 +110,13 @@ impl IntoElement for MenuCard {
 
     fn into_element(self) -> Self::Element {
         let provider = self.data.provider;
+        tracing::info!(
+            provider = ?provider,
+            has_snapshot = self.data.snapshot.is_some(),
+            has_error = self.data.error.is_some(),
+            is_refreshing = self.data.is_refreshing,
+            "MenuCard rendering"
+        );
         let mut card = div().flex().flex_col();
 
         // Header section

@@ -156,10 +156,11 @@ impl Render for MenuPanel {
         let state = cx.global::<AppState>();
         let settings = state.settings.read(cx);
         let enabled = state.enabled_providers(cx);
-        debug!(
+        info!(
             enabled_count = enabled.len(),
+            providers = ?enabled,
             merge_icons = settings.merge_icons(),
-            "Menu state"
+            "Menu state - enabled providers"
         );
 
         // Build the content based on selected tab

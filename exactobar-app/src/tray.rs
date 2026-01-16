@@ -1064,7 +1064,7 @@ impl SystemTray {
         let linux_tray = LinuxTray::new(self.linux_event_sender.clone(), icon);
 
         // Spawn the tray service
-        match ksni::TrayService::new(linux_tray).spawn() {
+        match linux_tray.spawn() {
             Ok(handle) => {
                 self.sni_handle = Some(handle);
                 info!("Linux SNI tray service started");
@@ -1159,13 +1159,13 @@ impl SystemTray {
                         }
                         LinuxTrayEvent::Settings => {
                             info!("Settings requested from tray menu");
-                            let _ = cx.update(|_, cx| {
+                            let _ = cx.update(|cx| {
                                 crate::actions::open_settings(cx);
                             });
                         }
                         LinuxTrayEvent::Quit => {
                             info!("Quit requested from tray menu");
-                            let _ = cx.update(|_, cx| {
+                            let _ = cx.update(|cx| {
                                 cx.quit();
                             });
                         }
@@ -1413,8 +1413,8 @@ impl SystemTray {
 
     /// Opens the tray menu as a GPUI popup window.
     ///
-    /// On Linux, we position the window near the mouse cursor since we
-    /// don't have reliable access to the tray icon's position.
+    /// On Linux, we position the window at the top-right of the screen,
+    /// near where system tray icons typically appear.
     fn open_menu(&mut self, provider: Option<ProviderKind>, cx: &mut App) {
         info!(provider = ?provider, "Opening GPUI popup menu (Linux)...");
         self.close_menu(cx);
@@ -1424,10 +1424,20 @@ impl SystemTray {
         let menu_width = 340.0_f32;
         let menu_height = 600.0_f32;
 
-        // On Linux, position near top-right of screen as a fallback
-        // (getting mouse position would require additional dependencies)
-        let origin_x = 100.0_f32;
-        let origin_y = 30.0_f32;
+        // Get screen dimensions to position menu at top-right (near system tray)
+        let (origin_x, origin_y) = if let Some(display) = cx.primary_display() {
+            let screen_bounds = display.bounds();
+            let screen_width: f32 = screen_bounds.size.width.into();
+            // Position at top-right: 10px from right edge, 30px from top (below panel)
+            let x = screen_width - menu_width - 10.0;
+            let y = 30.0_f32;
+            info!(screen_width = screen_width, x = x, y = y, "Positioning menu at top-right");
+            (x, y)
+        } else {
+            // Fallback if we can't get display info
+            warn!("Could not get primary display, using fallback position");
+            (100.0_f32, 30.0_f32)
+        };
 
         let bounds = Bounds::new(
             point(px(origin_x), px(origin_y)),

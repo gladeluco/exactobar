@@ -93,6 +93,10 @@ fn main() {
 
     // Run the GPUI application
     Application::new().run(|cx: &mut App| {
+        // IMPORTANT: Tray apps must not quit when the popup window closes!
+        // On Linux, the default is to quit when last window closes.
+        cx.set_quit_mode(QuitMode::Explicit);
+
         // Register actions
         actions::register_actions(cx);
 
