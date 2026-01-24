@@ -62,7 +62,7 @@ impl SyntheticQuotaResponse {
         if let Some(ref sub) = self.subscription {
             // Calculate usage percentage
             let used_percent = if sub.limit > 0 {
-                (sub.requests as f64 / sub.limit as f64) * 100.0
+                (sub.requests / sub.limit as f64) * 100.0
             } else {
                 0.0
             };
@@ -227,7 +227,7 @@ mod tests {
                     requests: 50.0,
                     renews_at: Some("2025-09-21T14:36:14.288Z".to_string()),
                 },
-            })
+            }),
         };
 
         let snapshot = response.to_snapshot();
@@ -252,7 +252,7 @@ mod tests {
                     requests: 50.0,
                     renews_at: Some("2025-09-21T14:36:14.288Z".to_string()),
                 },
-            })
+            }),
         };
 
         let snapshot = response.to_snapshot();

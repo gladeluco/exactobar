@@ -61,17 +61,17 @@
 //!
 //! A macOS menu bar app for monitoring LLM provider usage.
 
-mod actions;
-mod components;
-mod icon;
-mod menu;
-mod notifications;
-mod refresh;
-mod state;
-mod theme;
-mod tray;
-mod updater;
-mod windows;
+pub mod actions;
+pub mod components;
+pub mod icon;
+pub mod menu;
+pub mod notifications;
+pub mod refresh;
+pub mod state;
+pub mod theme;
+pub mod tray;
+pub mod updater;
+pub mod windows;
 
 use gpui::*;
 use tracing::{Level, info};

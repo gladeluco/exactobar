@@ -1408,7 +1408,12 @@ impl SystemTray {
     }
 
     /// Toggles the tray menu with optional click position.
-    pub fn toggle_menu_at(&mut self, provider: Option<ProviderKind>, click_pos: Option<(i32, i32)>, cx: &mut App) {
+    pub fn toggle_menu_at(
+        &mut self,
+        provider: Option<ProviderKind>,
+        click_pos: Option<(i32, i32)>,
+        cx: &mut App,
+    ) {
         if self.menu_window.is_some() {
             self.close_menu(cx);
         } else {
@@ -1420,7 +1425,12 @@ impl SystemTray {
     ///
     /// On Linux, we position the window near the click position (which is near the tray icon).
     /// The menu appears below and to the left of the click point so it doesn't obscure the icon.
-    fn open_menu_at(&mut self, provider: Option<ProviderKind>, click_pos: Option<(i32, i32)>, cx: &mut App) {
+    fn open_menu_at(
+        &mut self,
+        provider: Option<ProviderKind>,
+        click_pos: Option<(i32, i32)>,
+        cx: &mut App,
+    ) {
         info!(provider = ?provider, click_pos = ?click_pos, "Opening GPUI popup menu (Linux)...");
         self.close_menu(cx);
 
@@ -1432,21 +1442,30 @@ impl SystemTray {
         // Position menu near the click (tray icon location)
         let (origin_x, origin_y) = if let Some((click_x, click_y)) = click_pos {
             // Get screen dimensions
-            let (screen_width, screen_height) = cx.primary_display()
+            let (screen_width, screen_height) = cx
+                .primary_display()
                 .map(|d| {
                     let b = d.bounds();
                     (f32::from(b.size.width), f32::from(b.size.height))
                 })
                 .unwrap_or((1920.0, 1080.0));
-            
+
             // Position menu to the left of click point, keeping on screen
             let x = (click_x as f32 - menu_width).clamp(10.0, screen_width - menu_width - 10.0);
-            
+
             // Position menu so its bottom edge aligns with the click point
             // This puts the menu directly above where the user clicked (the tray icon)
             let y = (click_y as f32 - menu_height).max(10.0);
-            
-            info!(click_x = click_x, click_y = click_y, screen_w = screen_width, screen_h = screen_height, menu_x = x, menu_y = y, "Positioning menu above bottom panel");
+
+            info!(
+                click_x = click_x,
+                click_y = click_y,
+                screen_w = screen_width,
+                screen_h = screen_height,
+                menu_x = x,
+                menu_y = y,
+                "Positioning menu above bottom panel"
+            );
             (x, y)
         } else if let Some(display) = cx.primary_display() {
             // Fallback: top-right of screen
@@ -1454,7 +1473,12 @@ impl SystemTray {
             let screen_width: f32 = screen_bounds.size.width.into();
             let x = screen_width - menu_width - 10.0;
             let y = 30.0_f32;
-            info!(screen_width = screen_width, x = x, y = y, "Positioning menu at top-right (fallback)");
+            info!(
+                screen_width = screen_width,
+                x = x,
+                y = y,
+                "Positioning menu at top-right (fallback)"
+            );
             (x, y)
         } else {
             // Last resort fallback
