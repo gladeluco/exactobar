@@ -10,53 +10,242 @@ use gpui::*;
 use std::collections::HashMap;
 
 // ============================================================================
-// Menu Theme Colors (macOS Native Look)
+// Theme Mode
 // ============================================================================
 
-/// Surface/background color for menu panels.
-/// TRUE liquid glass - nearly invisible, lets blur show through!
+use exactobar_store::ThemeMode;
+use gpui::WindowAppearance;
+use std::sync::OnceLock;
+use std::sync::atomic::{AtomicBool, Ordering};
+
+/// Gets the current theme based on mode and system appearance.
+pub fn current_theme(mode: ThemeMode, appearance: WindowAppearance) -> ExactoBarTheme {
+    match mode {
+        ThemeMode::Dark => ExactoBarTheme::dark(),
+        ThemeMode::Light => ExactoBarTheme::light(),
+        ThemeMode::System => {
+            // Check system appearance
+            let is_dark = matches!(
+                appearance,
+                WindowAppearance::Dark | WindowAppearance::VibrantDark
+            );
+            if is_dark {
+                ExactoBarTheme::dark()
+            } else {
+                ExactoBarTheme::light()
+            }
+        }
+    }
+}
+
+static CURRENT_DARK_MODE: OnceLock<AtomicBool> = OnceLock::new();
+
+fn current_dark_mode() -> bool {
+    CURRENT_DARK_MODE
+        .get_or_init(|| AtomicBool::new(true))
+        .load(Ordering::Relaxed)
+}
+
+pub fn set_current_theme_mode(mode: ThemeMode, appearance: WindowAppearance) {
+    let is_dark = match mode {
+        ThemeMode::Dark => true,
+        ThemeMode::Light => false,
+        ThemeMode::System => matches!(
+            appearance,
+            WindowAppearance::Dark | WindowAppearance::VibrantDark
+        ),
+    };
+    CURRENT_DARK_MODE
+        .get_or_init(|| AtomicBool::new(true))
+        .store(is_dark, Ordering::Relaxed);
+}
+
+// ============================================================================
+// Dark Mode Colors
+// ============================================================================
+
+/// Surface/background color for menu panels (dark mode).
+pub fn surface_background_dark() -> Hsla {
+    hsla(0.0, 0.0, 0.0, 0.08) // Dark surface with slight opacity
+}
+
+/// Liquid glass panel tint (dark mode).
+pub fn liquid_glass_tint_dark() -> Hsla {
+    hsla(0.0, 0.0, 0.05, 0.75) // Subtle dark tint
+}
+
+/// Primary text color (dark mode).
+pub fn text_primary_dark() -> Hsla {
+    hsla(0.0, 0.0, 1.0, 0.95) // White
+}
+
+/// Secondary text color (dark mode).
+pub fn text_secondary_dark() -> Hsla {
+    hsla(0.0, 0.0, 1.0, 0.75) // 75% white for better contrast
+}
+
+/// Border color for dividers and outlines (dark mode).
+pub fn border_dark() -> Hsla {
+    hsla(0.0, 0.0, 1.0, 0.1) // Subtle light border
+}
+
+/// Muted text color for secondary information (dark mode).
+pub fn muted_dark() -> Hsla {
+    hsla(0.0, 0.0, 1.0, 0.6) // 60% white
+}
+
+/// Hover state background color (dark mode).
+pub fn hover_dark() -> Hsla {
+    hsla(0.0, 0.0, 1.0, 0.08) // Subtle white highlight
+}
+
+/// Active/pressed state background (dark mode).
+pub fn active_dark() -> Hsla {
+    hsla(0.0, 0.0, 1.0, 0.15) // Stronger white highlight
+}
+
+/// Track color for progress bars (dark mode).
+pub fn track_dark() -> Hsla {
+    hsla(0.0, 0.0, 1.0, 0.15) // Subtle white track
+}
+
+/// Surface color for buttons/controls (dark mode).
+pub fn surface_dark() -> Hsla {
+    hsla(0.0, 0.0, 0.15, 0.5) // Semi-transparent dark
+}
+
+// ============================================================================
+// Light Mode Colors
+// ============================================================================
+
+/// Surface/background color for menu panels (light mode).
+pub fn surface_background_light() -> Hsla {
+    hsla(0.0, 0.0, 0.98, 1.0) // Opaque light background to avoid over-blur
+}
+
+/// Text color (light mode).
+pub fn text_primary_light() -> Hsla {
+    hsla(0.0, 0.0, 0.05, 0.98) // Darker text for better readability
+}
+
+/// Secondary text color (light mode).
+pub fn text_secondary_light() -> Hsla {
+    hsla(0.0, 0.0, 0.25, 0.85) // Darker grey
+}
+
+/// Border color (light mode).
+pub fn border_light() -> Hsla {
+    hsla(0.0, 0.0, 0.85, 0.4) // More visible border
+}
+
+/// Muted text color (light mode).
+pub fn muted_light() -> Hsla {
+    hsla(0.0, 0.0, 0.4, 0.7) // Medium grey
+}
+
+/// Hover state (light mode).
+pub fn hover_light() -> Hsla {
+    hsla(0.0, 0.0, 0.0, 0.05) // Subtle dark highlight
+}
+
+/// Active state (light mode).
+pub fn active_light() -> Hsla {
+    hsla(0.0, 0.0, 0.0, 0.1) // Stronger dark highlight
+}
+
+/// Track color (light mode).
+pub fn track_light() -> Hsla {
+    hsla(0.0, 0.0, 0.7, 0.2) // Subtle grey track
+}
+
+/// Surface color (light mode).
+pub fn surface_light() -> Hsla {
+    hsla(0.0, 0.0, 0.95, 0.95) // Light grey surface with higher opacity
+}
+
+// ============================================================================
+// Backwards Compatibility - Default to Dark Mode
+// ============================================================================
+
+/// Surface/background color for menu panels (deprecated: use theme-specific versions).
 pub fn surface_background() -> Hsla {
-    hsla(0.0, 0.0, 0.0, 0.01) // Almost invisible - blur does the work
+    if current_dark_mode() {
+        surface_background_dark()
+    } else {
+        surface_background_light()
+    }
 }
 
 /// Liquid glass panel tint - ultra-subtle dark tint for definition.
 pub fn liquid_glass_tint() -> Hsla {
-    hsla(0.0, 0.0, 0.05, 0.6) // Very subtle dark tint
+    if current_dark_mode() {
+        liquid_glass_tint_dark()
+    } else {
+        hsla(0.0, 0.0, 0.98, 0.9)
+    }
 }
 
 /// Primary text color - white for dark mode.
 pub fn text_primary() -> Hsla {
-    hsla(0.0, 0.0, 1.0, 0.95) // Nearly white
+    if current_dark_mode() {
+        text_primary_dark()
+    } else {
+        text_primary_light()
+    }
 }
 
 /// Secondary text color - muted white for dark mode.
 pub fn text_secondary() -> Hsla {
-    hsla(0.0, 0.0, 1.0, 0.6) // 60% white
+    if current_dark_mode() {
+        text_secondary_dark()
+    } else {
+        text_secondary_light()
+    }
 }
 
 /// Border color for dividers and outlines - subtle white glow.
 pub fn border() -> Hsla {
-    hsla(0.0, 0.0, 1.0, 0.1) // Subtle light border
+    if current_dark_mode() {
+        border_dark()
+    } else {
+        border_light()
+    }
 }
 
 /// Liquid glass separator - ultra-subtle divider instead of hard borders.
 pub fn glass_separator() -> Hsla {
-    hsla(0.0, 0.0, 1.0, 0.04) // Nearly invisible separator
+    if current_dark_mode() {
+        hsla(0.0, 0.0, 1.0, 0.04)
+    } else {
+        hsla(0.0, 0.0, 0.0, 0.06)
+    }
 }
 
 /// Muted text color for secondary information.
 pub fn muted() -> Hsla {
-    hsla(0.0, 0.0, 1.0, 0.5) // 50% white
+    if current_dark_mode() {
+        muted_dark()
+    } else {
+        muted_light()
+    }
 }
 
 /// Hover state background color - subtle white highlight.
 pub fn hover() -> Hsla {
-    hsla(0.0, 0.0, 1.0, 0.08) // Subtle white highlight
+    if current_dark_mode() {
+        hover_dark()
+    } else {
+        hover_light()
+    }
 }
 
 /// Active/pressed state background.
 pub fn active() -> Hsla {
-    hsla(0.0, 0.0, 1.0, 0.15) // Stronger white highlight
+    if current_dark_mode() {
+        active_dark()
+    } else {
+        active_light()
+    }
 }
 
 /// Accent color for selected/active states (macOS blue).
@@ -81,17 +270,29 @@ pub fn error() -> Hsla {
 
 /// Surface color for buttons/controls - semi-transparent dark.
 pub fn surface() -> Hsla {
-    hsla(0.0, 0.0, 0.15, 0.5) // Semi-transparent dark surface
+    if current_dark_mode() {
+        surface_dark()
+    } else {
+        surface_light()
+    }
 }
 
 /// Track color for progress bars - subtle on dark background.
 pub fn track() -> Hsla {
-    hsla(0.0, 0.0, 1.0, 0.15) // Subtle white track for dark mode
+    if current_dark_mode() {
+        track_dark()
+    } else {
+        track_light()
+    }
 }
 
 /// Card background - for notification-style cards in dark mode.
 pub fn card_background() -> Hsla {
-    hsla(0.0, 0.0, 1.0, 0.08) // Very subtle white card bg
+    if current_dark_mode() {
+        hsla(0.0, 0.0, 1.0, 0.08)
+    } else {
+        hsla(0.0, 0.0, 1.0, 0.9)
+    }
 }
 
 /// Opaque window background for platforms without blur support (Linux).
@@ -101,7 +302,11 @@ pub fn window_background() -> Hsla {
 
 /// Liquid glass card background - even MORE subtle for true glass effect.
 pub fn liquid_card_background() -> Hsla {
-    hsla(0.0, 0.0, 1.0, 0.05) // 5% white - barely visible
+    if current_dark_mode() {
+        hsla(0.0, 0.0, 1.0, 0.05)
+    } else {
+        hsla(0.0, 0.0, 1.0, 0.95)
+    }
 }
 
 /// Returns the appropriate color for a usage percentage (USED, not remaining).
@@ -300,3 +505,8 @@ pub fn darken(color: Hsla, amount: f32) -> Hsla {
 pub fn transparent(color: Hsla, alpha: f32) -> Hsla {
     hsla(color.h, color.s, color.l, alpha)
 }
+
+// ============================================================================
+// Tests are in a separate integration test file to avoid binary recursion issues
+// See tests/theme_tests.rs for comprehensive theme system tests
+// ============================================================================
