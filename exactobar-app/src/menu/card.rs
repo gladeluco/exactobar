@@ -142,6 +142,7 @@ impl IntoElement for MenuCard {
                 snap,
                 self.data.session_label,
                 self.data.weekly_label,
+                Some("Search"),
                 self.data.show_used,
                 self.data.show_absolute,
             ));
